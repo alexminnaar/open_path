@@ -1,0 +1,12 @@
+
+
+class Filter(object):
+    """Abstract filter model class.  A filter must implement a predict and update step."""
+
+    def predict(self):
+        """Abstract predict method.  Predicts next time step based on model."""
+        pass
+
+    def update(self):
+        """Abstract update method.  Updates model based on new observation."""
+        pass
