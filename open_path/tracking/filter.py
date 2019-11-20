@@ -7,6 +7,6 @@ class Filter(object):
         """Abstract predict method.  Predicts next time step based on model."""
         pass
 
-    def update(self):
+    def update(self, z):
         """Abstract update method.  Updates model based on new observation."""
         pass
