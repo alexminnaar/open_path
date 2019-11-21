@@ -10,3 +10,6 @@ class Filter(object):
     def update(self, z):
         """Abstract update method.  Updates model based on new observation."""
         pass
+
+    def filter(self):
+        """Abstract filter method.  Should iteratively call predict and update methods."""
