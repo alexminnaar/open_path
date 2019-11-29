@@ -1,7 +1,7 @@
 import numpy as np
+from open_path.tracking.measurement import Device
 from open_path.tracking.filter import Filter
 import tensorflow as tf
-from open_path.tracking.measurement import Measurement, Device
 
 
 class KalmanFilter(Filter):
@@ -11,36 +11,45 @@ class KalmanFilter(Filter):
 
     def __init__(self):
         '''
-
+        Initialize the Kalman filter matrices.
         '''
 
+        # state vector and covariance matrix
         self.x = None
         self.P = None
 
+        # process noise covariance
         self.Q = None
+
+        # state transition matrix
         self.F = tf.convert_to_tensor(
             [[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]]
             , dtype=tf.float32)
 
+        # measurement noise covariance
         self.P = tf.convert_to_tensor(
             [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1000, 0], [0, 0, 0, 1000]]
             , dtype=tf.float32)
 
+        # radar noise covariance
         self.R_radar = tf.convert_to_tensor(
             [[0.09, 0, 0], [0, 0.0009, 0], [0, 0, 0.09]]
             , dtype=tf.float32
         )
 
+        # lidar noise covariance
         self.R_lidar = tf.convert_to_tensor(
             [[0.0225, 0], [0, 0.0225]]
             , dtype=tf.float32
         )
 
+        # lidar observation matrix
         self.H_lidar = tf.convert_to_tensor(
             [[1, 0, 0, 0], [0, 1, 0, 0]]
             , dtype=tf.float32
         )
 
+        # acceleration noise
         self.acc_noise_x = 9
         self.acc_noise_y = 9
 
@@ -49,24 +58,23 @@ class KalmanFilter(Filter):
 
     def predict(self):
         '''
-
-        :return:
+        Predict the state vector and covariance matrix.
         '''
         self.x = tf.matmul(self.F, self.x)
         self.P = tf.matmul(tf.matmul(self.F, self.P), tf.transpose(self.F)) + self.Q
 
     def lidar_measurement_prediction(self):
         '''
-
-        :return:
+        Compute lidar measurement prediction i.e. extract px and py from the state vector.
+        :return: Lidar measurement prediction.
         '''
         z_pred = tf.matmul(self.H_lidar, self.x)
         return z_pred
 
     def radar_measurement_prediction(self):
         '''
-
-        :return:
+        Compute radar measurement prediction by converting cartesian state vector to polar coordinates.
+        :return: Radar measurement prediction.
         '''
         px, py, vx, vy = self.x.numpy()
 
@@ -78,9 +86,8 @@ class KalmanFilter(Filter):
 
     def update(self, z_):
         '''
-
-        :param z:
-        :return:
+        Use new measurement (combined with internal measurement prediction) to update state vector and covariance.
+        :param z: New measurement.
         '''
 
         # convert numpy measurement to tensor
@@ -95,6 +102,7 @@ class KalmanFilter(Filter):
 
             y_np = y.numpy()
 
+            # normalize angle
             while y_np[1][0] > np.pi:
                 y_np[1][0] -= 2 * np.pi
 
@@ -122,8 +130,8 @@ class KalmanFilter(Filter):
 
     def compute_jacobian(self):
         '''
-
-        :return:
+        Compute Jacobian of state vector which is required to linearize radar measurement.
+        :return: Jacobian.
         '''
         px, py, vx, vy = self.x.numpy()
 
@@ -145,9 +153,8 @@ class KalmanFilter(Filter):
 
     def filter_measurement(self, z):
         '''
-
-        :param z:
-        :return:
+        Compute one prediction/update step of the Kalman filter given a new measurement (from either radar or lidar).
+        :param z: New measurement.
         '''
 
         if not self.initialized:
