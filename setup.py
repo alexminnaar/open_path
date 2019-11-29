@@ -5,5 +5,5 @@ setup(name='OpenPath',
       description='A tracking, localization, and sensor-fusion library',
       author='Alex Minnaar',
       author_email='minnaaralex@gmail.com',
-      packages=['open_path'],
+      packages=['open_path', 'open_path.tracking'],
       )
